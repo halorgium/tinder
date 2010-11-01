@@ -55,12 +55,12 @@ module Tinder
 
     # List the users that are currently chatting in any room
     def users
-      rooms.map(&:users).flatten.compact.uniq.sort_by {|u| u[:name]}
+      rooms.map(&:users).flatten.compact.uniq.sort_by {|u| u.name}
     end
 
     # get the user info of the current user
     def me
-      connection.get("/users/me.json")["user"]
+      User.parse(connection.get("/users/me.json")["user"])
     end
   end
 end

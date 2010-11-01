@@ -5,6 +5,7 @@ require 'spec'
 gem 'activesupport', ENV['RAILS_VERSION'] if ENV['RAILS_VERSION']
 require 'tinder'
 require 'fakeweb'
+require 'json'
 
 FakeWeb.allow_net_connect = false
 

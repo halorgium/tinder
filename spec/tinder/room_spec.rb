@@ -11,6 +11,8 @@ describe Tinder::Room do
     module EventMachine; def self.run; yield end end
     EventMachine.stub!(:reactor_running?).and_return(true)
     @stream = mock(Twitter::JSONStream)
+    @stream.stub!(:on_max_reconnects)
+    @stream.stub!(:on_error)
     @stream.stub!(:each_item)
   end
 

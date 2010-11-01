@@ -35,8 +35,8 @@ describe Tinder::Campfire do
     
     it "should return a sorted list of users in all rooms" do
       @campfire.users.length.should == 2
-      @campfire.users.first[:name].should == "Jane Doe"
-      @campfire.users.last[:name].should == "John Doe"
+      @campfire.users.first.name.should == "Jane Doe"
+      @campfire.users.last.name.should == "John Doe"
     end
   end
   
@@ -47,7 +47,7 @@ describe Tinder::Campfire do
     end
     
     it "should return the current user's information" do
-      @campfire.me["name"].should == "John Doe"
+      @campfire.me.name.should == "John Doe"
     end
   end
 end

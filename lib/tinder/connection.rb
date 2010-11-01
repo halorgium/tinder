@@ -46,7 +46,7 @@ module Tinder
     module HTTPartyExtensions
       def perform_request(http_method, path, options) #:nodoc:
         response = super
-        raise AuthenticationFailed if response.code == 401
+        raise AuthenticationFailed, "#{http_method} #{path.inspect}" if response.code == 401
         response
       end
     end

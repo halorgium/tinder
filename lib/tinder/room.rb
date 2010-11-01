@@ -90,13 +90,34 @@ module Tinder
     # return the user with the given id; if it isn't in our room cache, do a request to get it
     def user(id)
       if id
-        user = users.detect {|u| u[:id] == id }
+        user = users.detect {|u| u.id == id }
         unless user
-          user_data = connection.get("/users/#{id}.json")
-          user = user_data && user_data[:user]
+          data = connection.get("/users/#{id}.json")
+          if data && user_data = data[:user]
+            user = User.parse(user_data)
+          end
         end
-        user[:created_at] = Time.parse(user[:created_at])
         user
+      end
+    end
+
+    class Message
+      def initialize(speak, id, type, body, created_at, user)
+        @speak      = speak
+        @id         = id
+        @type       = type
+        @body       = body
+        @created_at = created_at
+        @user       = user
+      end
+      attr_reader :id, :body, :created_at, :user
+
+      def reply(message)
+        @speak["#{user_name}: #{message}"]
+      end
+
+      def user_name
+        @user.name
       end
     end
 
@@ -133,17 +154,26 @@ module Tinder
         :timeout => 6,
         :ssl => connection.options[:ssl]
       }.merge(options)
-      EventMachine::run do
+      #EventMachine::run do
         @stream = Twitter::JSONStream.connect(options)
         @stream.each_item do |message|
-          message = HashWithIndifferentAccess.new(JSON.parse(message))
-          message[:user] = user(message.delete(:user_id))
-          message[:created_at] = Time.parse(message[:created_at])
+          message_data = HashWithIndifferentAccess.new(JSON.parse(message))
+          message_data[:user] = user(message_data.delete(:user_id))
+          message_data[:created_at] = Time.parse(message_data[:created_at])
+          message = Message.new(method(:speak), *message_data.values_at(:id, :type, :body, :created_at, :user))
           yield(message)
         end
+        @stream.on_error do |message|
+          puts "error: #{message.inspect}"
+        end
+
+        @stream.on_max_reconnects do |timeout, retries|
+          puts "Something is wrong on your side. Send yourself an email."
+        end
+
         # if we really get disconnected
         raise ListenFailed.new("got disconnected from #{@name}!") if !EventMachine.reactor_running?
-      end
+      #end
     end
 
     def listening?
@@ -204,7 +234,9 @@ module Tinder
         @full = attributes['full']
         @open_to_guests = attributes['open_to_guests']
         @active_token_value = attributes['active_token_value']
-        @users = attributes['users']
+        @users = attributes['users'].map do |user_data|
+          User.parse(user_data)
+        end
 
         @loaded = true
       end
